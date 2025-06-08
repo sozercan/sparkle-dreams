@@ -1526,38 +1526,48 @@ async function handleShareSchedule() {
             scheduleStatusElement.style.display = 'none';
         }
 
-
         const canvas = await html2canvas(scheduleTimelineElement, {
             scale: 2,
             useCORS: true,
             logging: false, // Disable extensive logging from html2canvas itself
             backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#ffffff', // Adjusted dark bg
             onclone: (clonedDoc) => {
-                // Ensure the "Today's Plan" title is visible and styled correctly in the clone
                 const clonedTimeline = clonedDoc.getElementById('schedule-timeline');
                 if (clonedTimeline) {
-                    clonedTimeline.style.paddingTop = '20px'; // Add padding to make space for title
+                    // Hide the original H2 title if it exists in the clone
+                    const originalTitle = clonedTimeline.querySelector('h2');
+                    if (originalTitle) {
+                        originalTitle.style.display = 'none';
+                    }
+
+                    clonedTimeline.style.paddingTop = '20px';
                     const titleElement = clonedDoc.createElement('h2');
                     titleElement.textContent = "Today's Plan";
-                    // Apply similar styling as the original title for consistency
                     titleElement.style.textAlign = 'center';
-                    titleElement.style.fontSize = '1.5rem'; // Equivalent to text-2xl
-                    titleElement.style.fontWeight = '600'; // Equivalent to font-semibold
-                    titleElement.style.marginBottom = '1.5rem'; // Equivalent to mb-6
-                    const accentTextColor = document.documentElement.classList.contains('dark') ? '#60A5FA' : '#3B82F6'; // Example accent colors
+                    titleElement.style.fontSize = '1.5rem'; 
+                    titleElement.style.fontWeight = '600'; 
+                    titleElement.style.marginBottom = '1.5rem'; 
+                    
+                    // Determine accent color based on theme for the title
+                    // This attempts to match the .accent-text color dynamically
+                    let accentTextColor = '#3B82F6'; // Default blue for light mode
+                    if (document.documentElement.classList.contains('dark')) {
+                        // Attempt to get the computed style of an element with .accent-text
+                        // This is a bit of a hack for html2canvas, as direct class application might not work
+                        // We'll use a known dark mode accent color as a fallback
+                        accentTextColor = '#60A5FA'; // Default blue for dark mode (tailwind blue-400)
+                        // A more robust way would be to have these colors defined in JS or CSS variables accessible here
+                    }
                     titleElement.style.color = accentTextColor;
 
-
-                    // Attempt to find a suitable element to prepend the title to, or prepend to body of cloned doc
                     const timelineContainerInClone = clonedDoc.getElementById('timelineContainer');
                     if (timelineContainerInClone && timelineContainerInClone.parentNode === clonedTimeline) {
-                        clonedTimeline.insertBefore(titleElement, timelineContainerInClone);
+                         clonedTimeline.insertBefore(titleElement, timelineContainerInClone);
                     } else {
-                        // Fallback: prepend to the cloned schedule-timeline element directly if structure is unexpected
                         clonedTimeline.insertBefore(titleElement, clonedTimeline.firstChild);
                     }
                 }
-                // Hide "Suggest Activities" buttons in the cloned document
+                
                 const suggestButtons = clonedDoc.querySelectorAll('.gemini-button');
                 suggestButtons.forEach(btn => {
                     if (btn.textContent.includes('Suggest Activities')) {
@@ -1573,7 +1583,6 @@ async function handleShareSchedule() {
         if (scheduleStatusElement) {
             scheduleStatusElement.style.display = originalStatusDisplay;
         }
-
 
         const imageDataUrl = canvas.toDataURL('image/png');
 
