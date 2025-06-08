@@ -1,0 +1,22 @@
+{
+  "name": "sparkle-dreams",
+  "version": "1.0.0",
+  "description": "Sparkle Dreams Web Application",
+  "main": "script.js",
+  "scripts": {
+    "start": "http-server -p 8080",
+    "test": "npx playwright test"
+  },
+  "keywords": [
+    "baby",
+    "sleep",
+    "schedule",
+    "pwa"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "http-server": "^14.1.1"
+  }
+}
