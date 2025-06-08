@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌙 Sparkle Dreams - Baby Schedule Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="antialiased">
+    <script src="script.js"></script>
+    <header class="header-bg text-white p-6 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl md:text-4xl font-bold">🌙 Sparkle Dreams</h1>
+            <div class="flex items-center space-x-3">
+                <button id="aiFeaturesToggle" class="header-toggle" title="Toggle AI Features">
+                    <span class="ai-on-icon">✨</span> <span class="ai-off-icon hidden">🚫</span>
+                    </button>
+                    <button id="aiSettingsButton" class="header-toggle" title="Settings" onclick="openModal('aiProviderModal')">
+                        ⚙️
+                    </button>
+                <button id="darkModeToggle" class="header-toggle" title="Toggle Dark/Light Mode">
+                    <span class="light-mode-icon">🌙</span>
+                    <span class="dark-mode-icon hidden">☀️</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section id="input-form" class="card">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold accent-text">Plan Your Baby's Day</h2>
+                <button type="button" id="clearSettingsButton" class="clear-button text-xs">🗑️ Clear & Reset</button>
+            </div>
+            <form id="scheduleSettingsForm" class="space-y-8">
+                <div class="mb-6">
+                    <label class="form-label text-lg">Planning Mode:</label>
+                    <div class="planning-mode-toggle flex items-center space-x-6">
+                        <label class="flex items-center"><input type="radio" name="planningMode" value="fullDay" checked > <span class="ml-2">Plan Full Day</span></label>
+                        <label class="flex items-center"><input type="radio" name="planningMode" value="fromNow" > <span class="ml-2">Start from Now</span></label>
+                    </div>
+                </div>
+
+                <div id="fullDayInputs">
+                    <label for="wakeUpTime" class="form-label">Baby's Wake-Up Time:</label>
+                    <input type="time" id="wakeUpTime" class="form-input" value="07:00">
+                </div>
+
+                <div id="fromNowInputs" class="hidden space-y-4">
+                    <p class="text-md">Current time: <strong id="currentTimeDisplay" class="accent-text text-lg"></strong></p>
+                    <div>
+                        <label class="form-label">Baby is currently:</label>
+                        <select id="currentActivityType" class="form-input">
+                            <option value="awake">Awake</option>
+                            <option value="napping">Napping</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="currentActivityEndTime" class="form-label">Current activity is scheduled to END at:</label>
+                        <input type="time" id="currentActivityEndTime" class="form-input">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <label for="babyAge" class="form-label">Baby's Age (months):</label>
+                    <div class="flex items-center gap-4">
+                        <input type="number" id="babyAge" class="form-input w-1/3" min="0" placeholder="e.g., 6">
+                        <button type="button" id="applyAgeDefaultsButton" class="defaults-button whitespace-nowrap">👶 Apply Age Defaults</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Enter age to get suggested wake window and nap durations. You can customize them below.</p>
+                </div>
+
+                <div>
+                    <label class="form-label">Wake Window Durations (e.g., 1h 45m or 105m):</label>
+                    <p class="text-xs text-gray-500 mb-2">Enter durations for each wake window. The schedule will use them in order.</p>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div id="wakeWindowInputsContainer" class="duration-inputs-container flex-grow">
+                            <!-- Wake window inputs will be dynamically added here -->
+                        </div>
+                        <button type="button" id="addWakeWindowButton" class="form-button text-lg py-1 px-3">+</button>
+                        <button type="button" id="removeWakeWindowButton" class="clear-button text-lg py-1 px-3">-</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">Nap Durations (e.g., 35m or 1h):</label>
+                    <p class="text-xs text-gray-500 mb-2">Enter durations for each nap. The schedule will use them in order.</p>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div id="napInputsContainer" class="duration-inputs-container flex-grow">
+                            <!-- Nap inputs will be dynamically added here -->
+                        </div>
+                        <button type="button" id="addNapButton" class="form-button text-lg py-1 px-3">+</button>
+                        <button type="button" id="removeNapButton" class="clear-button text-lg py-1 px-3">-</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="desiredBedtime" class="form-label">Approximate Desired Bedtime:</label>
+                    <input type="time" id="desiredBedtime" class="form-input" value="19:30" required>
+                </div>
+
+                <div id="formErrorMessageArea" class="error-message-area hidden"></div>
+
+                <div class="text-center pt-4">
+                    <button type="submit" class="form-button px-8 py-3 text-base">Generate Schedule</button>
+                </div>
+            </form>
+        </section>
+
+        <div id="scheduleOutputContainer" class="hidden">
+            <section id="scheduleSummarySection" class="card schedule-summary-card hidden p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-3 accent-text">Schedule Summary</h2>
+                <div id="scheduleSummaryContent" class="text-sm space-y-1">
+                    </div>
+            </section>
+
+            <section id="introduction" class="mb-8 text-center">
+                <p class="text-lg leading-relaxed max-w-2xl mx-auto">
+                    Here is your baby's generated schedule. Use the ✨ buttons for AI-powered activity suggestions and sleep tips!
+                </p>
+            </section>
+
+            <section id="schedule-timeline" class="card">
+                <h2 class="text-2xl font-semibold mb-6 text-center accent-text">Today's Plan</h2>
+                <div id="timelineContainer" class="space-y-8"></div>
+                <p id="schedule-status" class="mt-6 text-center font-semibold accent-text text-lg"></p>
+            </section>
+
+            <section id="gemini-features" class="card subtle-bg">
+                <h2 class="text-2xl font-semibold mb-4 text-center accent-text">✨ AI-Powered Insights</h2>
+                <p class="text-md mb-6 text-center max-w-xl mx-auto">
+                    Get helpful tips and ideas to make your day smoother.
+                </p>
+                <div class="text-center">
+                    <button id="getSleepTipsButton" class="gemini-button">✨ Get General Sleep Tips</button>
+                </div>
+            </section>
+
+            <section id="duration-summary" class="card">
+                <h2 class="text-2xl font-semibold mb-6 text-center accent-text">Activity Durations</h2>
+                <p class="text-md mb-6 text-center max-w-xl mx-auto">
+                    This chart provides a visual comparison of the time allocated for each nap and wake window. Durations are shown in minutes.
+                </p>
+                <div class="chart-container">
+                    <canvas id="durationChart"></canvas>
+                </div>
+            </section>
+        </div>
+        <div id="initialMessage" class="text-center p-8 text-gray-500 dark:text-slate-400">
+            <p>Please enter your baby's details above and click "Generate Schedule" to see the plan.</p>
+        </div>
+
+    </main>
+
+    <footer class="text-center p-6 mt-12 border-t border-gray-200 dark:border-slate-700">
+        <p class="text-sm text-gray-500 dark:text-slate-400">&copy; <span id="currentYear"></span> Sparkle Dreams ✨. Enhanced with AI.</p>
+    </footer>
+
+    <div id="sleepTipsModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-button" onclick="closeModal('sleepTipsModal')">&times;</span>
+            <h3 class="text-xl font-semibold mb-4 accent-text">✨ General Baby Sleep Tips</h3>
+            <div id="sleepTipsContent"><div class="loading-spinner"></div></div>
+        </div>
+    </div>
+<div id="aiProviderModal" class="modal hidden">
+    <div class="modal-content">
+        <span class="modal-close-button" onclick="closeModal('aiProviderModal')">&times;</span>
+        <h3 class="text-xl font-semibold mb-4 accent-text">Settings</h3>
+        <div class="space-y-4">
+
+            <div id="locationSettingsSection"
+                class="settings-section pt-0 border-t-0">
+                <label for="locationInput" class="form-label">Location (Optional - used for activity suggestions):</label>
+                <div class="flex items-center gap-4">
+                    <input type="text" id="locationInput" class="form-input flex-grow"
+                        placeholder="e.g., San Francisco, CA">
+                    <button type="button" id="useCurrentLocationButton" class="location-button-modal">📍</button>
+                </div>
+                <p id="locationStatus" class="text-xs text-gray-500 mt-1">This helps tailor activity suggestions to your
+                    area.</p>
+            </div>
+
+            <div class="border-t border-gray-200 dark:border-slate-600 pt-4 mt-4">
+                <label for="numSuggestionsInput"
+                    class="block text-sm font-medium text-gray-700 dark:text-slate-300">Number of Activity Suggestions</label>
+                <input type="number" id="numSuggestionsInput" name="numSuggestionsInput" value="3" min="1" max="10"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent-focus focus:border-accent-focus sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+            </div>
+
+            <div class="pt-4 border-t border-gray-200 dark:border-slate-600">
+                <label for="aiProviderSelect" class="form-label">Select AI Provider:</label>
+                <select id="aiProviderSelect" class="form-input">
+                    <option value="gemini" selected>Gemini</option>
+                    <option value="openai_compatible">OpenAI Compatible</option>
+                </select>
+            </div>
+
+            <div id="geminiApiKeyInputContainer"
+                class="space-y-3 hidden pt-4 border-t border-gray-200 dark:border-slate-600">
+                <div>
+                    <label for="geminiApiKeyInput"
+                        class="block text-sm font-medium text-gray-700 dark:text-slate-300">Gemini API Key</label>
+                    <input type="password" id="geminiApiKeyInput" name="geminiApiKeyInput"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent-focus focus:border-accent-focus sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                </div>
+                <div>
+                    <label for="geminiModelInput"
+                        class="block text-sm font-medium text-gray-700 dark:text-slate-300">Gemini Model
+                        (Optional)</label>
+                    <input type="text" id="geminiModelInput" name="geminiModelInput" placeholder="gemini-2.0-flash"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent-focus focus:border-accent-focus sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                </div>
+            </div>
+
+            <div id="openaiCompatibleInputContainer"
+                class="space-y-3 hidden pt-4 border-t border-gray-200 dark:border-slate-600">
+                <div>
+                    <label for="apiKeyInput" class="block text-sm font-medium text-gray-700 dark:text-slate-300">API
+                        Key</label>
+                    <input type="password" id="apiKeyInput" name="apiKeyInput"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent-focus focus:border-accent-focus sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                        placeholder="Enter API key">
+                </div>
+                <div>
+                    <label for="endpointInput"
+                        class="block text-sm font-medium text-gray-700 dark:text-slate-300">Endpoint URL
+                        (Optional)</label>
+                    <input type="text" id="endpointInput" name="endpointInput"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent-focus focus:border-accent-focus sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                        placeholder="Default: OpenAI.">
+                </div>
+                <div id="modelDeploymentInputContainer" class="space-y-1 mt-2">
+                    <label for="modelDeploymentNameInput"
+                        class="block text-sm font-medium text-gray-700 dark:text-slate-300">Model/Deployment
+                        Name</label>
+                    <input type="text" id="modelDeploymentNameInput" name="modelDeploymentNameInput"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent-focus focus:border-accent-focus sm:text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                        placeholder="e.g., gpt-3.5-turbo or Azure deployment name">
+                </div>
+            </div>
+
+            <button id="saveAiProviderSettings" class="form-button w-full mt-4">Save Settings</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

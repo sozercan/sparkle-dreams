@@ -1,0 +1,55 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  test:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x] # Still useful for npx and global npm packages
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        # No npm cache needed if not using package.json heavily
+
+    - name: Install global dependencies (Playwright & http-server)
+      run: npm install -g playwright http-server
+
+    # If you have unit tests that can be run via a command, add that step here.
+    # For example, if you had a test runner HTML file you could try to open with Playwright:
+    # - name: Run unit tests (if applicable)
+    #   run: npx playwright test unit-tests.spec.js # Example: if unit tests are run via a Playwright spec
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps # Installs browsers needed by Playwright
+
+    - name: Start application for E2E tests
+      run: http-server -p 8080 & # Starts a simple server for your static files
+      # The '&' runs it in the background.
+
+    - name: Run E2E tests
+      run: npx playwright test # Assumes your E2E tests are configured (e.g., playwright.config.js)
+      # Ensure your E2E tests are configured to run against http://localhost:8080
+
+    # Optional: Upload test results (example for Playwright HTML report)
+    # - name: Upload Playwright report
+    #   if: always() # Run this step even if previous steps fail
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: playwright-report
+    #     path: playwright-report/ # Default Playwright report output directory
+    #     retention-days: 7
