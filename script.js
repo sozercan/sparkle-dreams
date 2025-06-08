@@ -1478,18 +1478,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add html2canvas script for image generation
     const html2canvasScript = document.createElement('script');
     html2canvasScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    // html2canvasScript.integrity = 'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoVXM5RtnEAUit5FPqTDQvlL9BURuw=='; // Removing integrity check for now
     html2canvasScript.crossOrigin = 'anonymous';
     html2canvasScript.referrerPolicy = 'no-referrer';
     document.head.appendChild(html2canvasScript);
 
-    initializeEventListeners();
     loadSettingsFromLocalStorage();
-    applyTheme(localStorage.getItem(THEME_KEY) || 'light');
+    setInitialTheme(); // Correct function to call for initial theme setting
     applyAiFeaturesState(localStorage.getItem(AI_FEATURES_KEY) !== 'false'); // Default to true if not set
     updateTimeline(true); // Initial draw with placeholder or empty state
-    updateCurrentTimeDisplay();
-    setInterval(updateCurrentTimeDisplay, 60000); // Update every minute
+
     if (timelineUpdateIntervalId) clearInterval(timelineUpdateIntervalId);
     timelineUpdateIntervalId = setInterval(updateActiveTimelineStates, 5000); // Update active states every 5 seconds
 
@@ -1502,46 +1499,106 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function handleShareSchedule() {
     const scheduleTimelineElement = document.getElementById('schedule-timeline');
+
     if (!scheduleTimelineElement) {
-        console.error('Schedule timeline element not found.');
-        alert('Could not find the schedule to share.');
+        console.error('Schedule timeline element not found (id: schedule-timeline).');
+        alert('Could not find the schedule to share. Element not found.');
         return;
     }
 
     if (typeof html2canvas === 'undefined') {
-        console.error('html2canvas is not loaded.');
-        alert('Sharing library not loaded. Please try again in a moment.');
+        console.error('html2canvas library is not loaded.');
+        alert('Sharing library (html2canvas) not loaded. Please try again in a moment or check console.');
         return;
     }
 
     try {
-        // Temporarily hide the share button itself from the capture
         const shareButton = document.getElementById('shareScheduleButton');
-        if(shareButton) shareButton.style.display = 'none';
+        if (shareButton) {
+            shareButton.style.display = 'none';
+        }
+
+        // Temporarily remove or adjust elements that might interfere with layout
+        const scheduleStatusElement = document.getElementById('schedule-status');
+        let originalStatusDisplay = '';
+        if (scheduleStatusElement) {
+            originalStatusDisplay = scheduleStatusElement.style.display;
+            scheduleStatusElement.style.display = 'none';
+        }
+
 
         const canvas = await html2canvas(scheduleTimelineElement, {
-            scale: 2, // Increase scale for better resolution
-            useCORS: true, // If you have external images/fonts
-            logging: true, // For debugging
-            backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff' // Match dark/light theme
+            scale: 2,
+            useCORS: true,
+            logging: false, // Disable extensive logging from html2canvas itself
+            backgroundColor: document.documentElement.classList.contains('dark') ? '#111827' : '#ffffff', // Adjusted dark bg
+            onclone: (clonedDoc) => {
+                // Ensure the "Today's Plan" title is visible and styled correctly in the clone
+                const clonedTimeline = clonedDoc.getElementById('schedule-timeline');
+                if (clonedTimeline) {
+                    clonedTimeline.style.paddingTop = '20px'; // Add padding to make space for title
+                    const titleElement = clonedDoc.createElement('h2');
+                    titleElement.textContent = "Today's Plan";
+                    // Apply similar styling as the original title for consistency
+                    titleElement.style.textAlign = 'center';
+                    titleElement.style.fontSize = '1.5rem'; // Equivalent to text-2xl
+                    titleElement.style.fontWeight = '600'; // Equivalent to font-semibold
+                    titleElement.style.marginBottom = '1.5rem'; // Equivalent to mb-6
+                    const accentTextColor = document.documentElement.classList.contains('dark') ? '#60A5FA' : '#3B82F6'; // Example accent colors
+                    titleElement.style.color = accentTextColor;
+
+
+                    // Attempt to find a suitable element to prepend the title to, or prepend to body of cloned doc
+                    const timelineContainerInClone = clonedDoc.getElementById('timelineContainer');
+                    if (timelineContainerInClone && timelineContainerInClone.parentNode === clonedTimeline) {
+                        clonedTimeline.insertBefore(titleElement, timelineContainerInClone);
+                    } else {
+                        // Fallback: prepend to the cloned schedule-timeline element directly if structure is unexpected
+                        clonedTimeline.insertBefore(titleElement, clonedTimeline.firstChild);
+                    }
+                }
+                // Hide "Suggest Activities" buttons in the cloned document
+                const suggestButtons = clonedDoc.querySelectorAll('.gemini-button');
+                suggestButtons.forEach(btn => {
+                    if (btn.textContent.includes('Suggest Activities')) {
+                        btn.style.display = 'none';
+                    }
+                });
+            }
         });
 
-        if(shareButton) shareButton.style.display = ''; // Show the button again
+        if (shareButton) {
+            shareButton.style.display = '';
+        }
+        if (scheduleStatusElement) {
+            scheduleStatusElement.style.display = originalStatusDisplay;
+        }
+
 
         const imageDataUrl = canvas.toDataURL('image/png');
 
-        // Attempt to use Web Share API if available
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await (await fetch(imageDataUrl)).blob()], "schedule.png", { type: "image/png" })] })) {
+        if (navigator.share && navigator.canShare) {
             const blob = await (await fetch(imageDataUrl)).blob();
             const file = new File([blob], "sparkle-dreams-schedule.png", { type: "image/png" });
-            await navigator.share({
-                title: 'My Baby Schedule from Sparkle Dreams',
-                text: 'Check out this baby schedule I generated with Sparkle Dreams!',
-                files: [file],
-            });
+
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: 'My Baby Schedule from Sparkle Dreams',
+                    text: 'Check out this baby schedule I generated with Sparkle Dreams!',
+                    files: [file],
+                });
+            } else {
+                // Fallback for when files cannot be shared
+                const link = document.createElement('a');
+                link.href = imageDataUrl;
+                link.download = 'sparkle-dreams-schedule.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                alert('Schedule image downloaded! Web Share API cannot share this file type.');
+            }
         } else {
-            // Fallback for browsers that don't support Web Share API or sharing files
-            // Create a link to download the image
+            // Fallback for when Web Share API is not available
             const link = document.createElement('a');
             link.href = imageDataUrl;
             link.download = 'sparkle-dreams-schedule.png';
@@ -1551,10 +1608,16 @@ async function handleShareSchedule() {
             alert('Schedule image downloaded! You can share it from your downloads.');
         }
     } catch (error) {
-        console.error('Error generating or sharing schedule image:', error);
-        alert('Sorry, there was an error creating the schedule image.');
+        console.error('Error during schedule image generation or sharing:', error);
+        alert('Sorry, there was an error creating the schedule image. Check console for details.');
         const shareButton = document.getElementById('shareScheduleButton');
-        if(shareButton) shareButton.style.display = ''; // Ensure button is visible on error
+        if (shareButton) {
+            shareButton.style.display = '';
+        }
+        const scheduleStatusElement = document.getElementById('schedule-status');
+        if (scheduleStatusElement) {
+            scheduleStatusElement.style.display = originalStatusDisplay;
+        }
     }
 }
 window.closeModal = closeModal;
