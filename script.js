@@ -1,54 +1,4 @@
-let generatedScheduleData = [];
-let durationChartInstance = null;
-const apiKey = ""; // Replace with your actual API key if needed
-let userLocation = null;
-const LOCAL_STORAGE_KEY = 'sparkleDreamsSettings';
-const THEME_KEY = 'sparkleDreamsTheme';
-const AI_FEATURES_KEY = 'sparkleDreamsAiEnabled';
-
-// AI Provider Settings Keys
-const AI_PROVIDER_KEY = 'sparkleDreamsAiProvider';
-const GEMINI_API_KEY_KEY = 'sparkleDreamsGeminiApiKey';
-const GEMINI_MODEL_KEY = 'sparkleDreamsGeminiModel'; // Added for Gemini model
-const API_KEY_KEY = 'sparkleDreamsApiKey'; // Generic API Key
-const ENDPOINT_KEY = 'sparkleDreamsEndpoint'; // Generic Endpoint
-const MODEL_DEPLOYMENT_NAME_KEY = 'sparkleDreamsModelDeploymentName'; // Unified key for OpenAI/Azure model/deployment
-const NUM_SUGGESTIONS_KEY = 'sparkleDreamsNumSuggestions'; // Key for number of suggestions
-
-let activeSuggestionsBoxId = null; // To track which suggestion box is open
-let timelineUpdateIntervalId = null; // Store interval ID
-
-// Modal Functions
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-}
-
-// --- AI Provider Settings ---
-let aiProviderSelect,
-    geminiApiKeyInputContainer, geminiApiKeyInput, geminiModelInput,
-    openaiCompatibleInputContainer, apiKeyInput, endpointInput,
-    modelDeploymentInputContainer, modelDeploymentNameInput,
-    numSuggestionsInput,
-    saveAiProviderSettingsButton;
-
-function handleEndpointChange() {
-    // This function can be expanded if specific endpoint logic is needed later
-}
-
-function handleAiProviderChange() {
-    const selectedProvider = aiProviderSelect.value;
-    geminiApiKeyInputContainer.classList.add('hidden');
-    openaiCompatibleInputContainer.classList.add('hidden');
+// This file is intentionally blank as its contents have been refactored into modules in the js/ directory.
 
     if (selectedProvider === 'gemini') {
         geminiApiKeyInputContainer.classList.remove('hidden');
@@ -1544,10 +1494,10 @@ async function handleShareSchedule() {
                     const titleElement = clonedDoc.createElement('h2');
                     titleElement.textContent = "Today's Plan";
                     titleElement.style.textAlign = 'center';
-                    titleElement.style.fontSize = '1.5rem'; 
-                    titleElement.style.fontWeight = '600'; 
-                    titleElement.style.marginBottom = '1.5rem'; 
-                    
+                    titleElement.style.fontSize = '1.5rem';
+                    titleElement.style.fontWeight = '600';
+                    titleElement.style.marginBottom = '1.5rem';
+
                     // Determine accent color based on theme for the title
                     // This attempts to match the .accent-text color dynamically
                     let accentTextColor = '#3B82F6'; // Default blue for light mode
@@ -1567,7 +1517,7 @@ async function handleShareSchedule() {
                         clonedTimeline.insertBefore(titleElement, clonedTimeline.firstChild);
                     }
                 }
-                
+
                 const suggestButtons = clonedDoc.querySelectorAll('.gemini-button');
                 suggestButtons.forEach(btn => {
                     if (btn.textContent.includes('Suggest Activities')) {

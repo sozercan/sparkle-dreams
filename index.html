@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="antialiased">
-    <script src="script.js"></script>
+    <script type="module" src="js/main.js"></script>
     <header class="header-bg text-white p-6 shadow-md">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-3xl md:text-4xl font-bold">🌙 Sparkle Dreams</h1>
@@ -166,14 +166,14 @@
 
     <div id="sleepTipsModal" class="modal">
         <div class="modal-content">
-            <span class="modal-close-button" onclick="closeModal('sleepTipsModal')">&times;</span>
+            <span id="closeSleepTipsModalButton" class="modal-close-button" onclick="closeModal('sleepTipsModal')">&times;</span>
             <h3 class="text-xl font-semibold mb-4 accent-text">✨ General Baby Sleep Tips</h3>
             <div id="sleepTipsContent"><div class="loading-spinner"></div></div>
         </div>
     </div>
 <div id="aiProviderModal" class="modal hidden">
     <div class="modal-content">
-        <span class="modal-close-button" onclick="closeModal('aiProviderModal')">&times;</span>
+        <span id="closeAiProviderModalButton" class="modal-close-button" onclick="closeModal('aiProviderModal')">&times;</span>
         <h3 class="text-xl font-semibold mb-4 accent-text">Settings</h3>
         <div class="space-y-4">
 
